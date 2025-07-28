@@ -1,1 +1,267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thư Viện Audio Phật Pháp</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Google API Client Library -->
+    <script src="https://apis.google.com/js/api.js"></script>
 
+    <style>
+        /* Custom styles for the theme */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #fdfaf6; /* A very light, warm off-white background */
+            background-image: url('https://www.transparenttextures.com/patterns/light-paper-fibers.png'); /* Subtle paper texture */
+        }
+        .theme-gold {
+            color: #a88532; /* A soft, elegant gold color */
+        }
+        .btn-theme {
+            background-color: #a88532;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn-theme:hover {
+            background-color: #8c6d29;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        .table-row-hover:hover {
+            background-color: #fbf6ef;
+        }
+        /* Custom checkbox style */
+        .custom-checkbox {
+            appearance: none;
+            background-color: #fff;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            width: 1.25rem;
+            height: 1.25rem;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .custom-checkbox:checked {
+            background-color: #a88532;
+            border-color: #a88532;
+        }
+        .custom-checkbox:checked::after {
+            content: '✔';
+            position: absolute;
+            color: white;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+        }
+        /* Loader animation */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #a88532;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- Main Container -->
+    <div class="container mx-auto p-4 md:p-8 max-w-4xl">
+        
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold theme-gold mb-2">Thư Viện Audio</h1>
+            <p class="text-lg text-gray-600">Tuyển tập các bài giảng Phật pháp thanh tịnh</p>
+        </header>
+
+        <!-- Main Content Box -->
+        <main class="bg-white/80 backdrop-blur-sm rounded-xl shadow-lg p-4 sm:p-6">
+            
+            <!-- Loading Indicator -->
+            <div id="loader" class="text-center py-8">
+                <div class="loader"></div>
+                <p class="mt-4 text-gray-600">Đang tải danh sách bài giảng...</p>
+            </div>
+
+            <!-- Error Message Display -->
+            <div id="errorMessage" class="hidden text-center py-6 px-4 text-red-700 bg-red-100 rounded-lg">
+                <h3 class="font-bold">Đã xảy ra lỗi</h3>
+                <p id="errorText" class="mt-2 text-sm"></p>
+            </div>
+
+            <!-- File List Container -->
+            <div id="fileListContainer" class="hidden">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3">
+                    <p class="text-gray-600"><span id="fileCount">0</span> bài giảng được tìm thấy.</p>
+                    <button id="downloadSelectedBtn" class="btn-theme font-medium py-2 px-5 rounded-lg w-full sm:w-auto">
+                        Tải các mục đã chọn
+                    </button>
+                </div>
+                
+                <!-- Files Table -->
+                <div class="overflow-x-auto rounded-lg border border-gray-200">
+                    <table class="w-full text-left text-sm sm:text-base">
+                        <thead class="bg-gray-50 border-b-2 border-gray-200">
+                            <tr>
+                                <th class="p-4 w-12 text-center">
+                                    <input type="checkbox" id="selectAllCheckbox" class="custom-checkbox" title="Chọn tất cả">
+                                </th>
+                                <th class="p-4 font-medium">Tên bài giảng</th>
+                                <th class="p-4 font-medium text-center w-32">Tải về</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileListBody">
+                            <!-- File rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="text-center mt-8 text-gray-500 text-sm">
+            <p>Thiết kế với tâm thanh tịnh và lòng thành kính.</p>
+        </footer>
+    </div>
+	<script>
+		// URL của backend sau khi triển khai lên Render
+		// Chúng ta sẽ cập nhật URL này ở bước cuối
+		const BACKEND_URL = 'YOUR_RENDER_BACKEND_URL'; 
+
+		// Elements
+		const loader = document.getElementById('loader');
+		const errorMessage = document.getElementById('errorMessage');
+		const errorText = document.getElementById('errorText');
+		const fileListContainer = document.getElementById('fileListContainer');
+		const fileListBody = document.getElementById('fileListBody');
+		const fileCount = document.getElementById('fileCount');
+		const downloadSelectedBtn = document.getElementById('downloadSelectedBtn');
+		const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+
+		/**
+		 * Lấy danh sách file từ backend an toàn của chúng ta
+		 */
+		async function listFiles() {
+			if (BACKEND_URL === 'YOUR_RENDER_BACKEND_URL') {
+				showError('URL của Backend chưa được cấu hình. Vui lòng hoàn thành bước triển khai lên Render và cập nhật lại URL.');
+				return;
+			}
+
+			loader.classList.remove('hidden');
+			errorMessage.classList.add('hidden');
+			fileListContainer.classList.add('hidden');
+
+			try {
+				const response = await fetch(`${BACKEND_URL}/api/files`);
+				if (!response.ok) {
+					throw new Error(`Lỗi từ máy chủ: ${response.statusText}`);
+				}
+				const data = await response.json();
+				
+				const files = data.files;
+				if (files && files.length > 0) {
+					renderFiles(files);
+					loader.classList.add('hidden');
+					fileListContainer.classList.remove('hidden');
+				} else {
+					showError('Không tìm thấy file nào trong thư mục, hoặc thư mục không được chia sẻ công khai.');
+				}
+			} catch (error) {
+				console.error("Error fetching files from backend: ", error);
+				showError(`Không thể tải danh sách file từ máy chủ. Vui lòng kiểm tra lại URL của backend và đảm bảo backend đang hoạt động. Lỗi: ${error.message}`);
+			}
+		}
+
+		/**
+		 * Hiển thị danh sách file lên bảng
+		 * @param {Array} files - Mảng các đối tượng file
+		 */
+		function renderFiles(files) {
+			fileListBody.innerHTML = '';
+			files.forEach((file, index) => {
+				const row = document.createElement('tr');
+				row.className = 'border-b border-gray-200 table-row-hover';
+				
+				const fileNameMatch = file.name.match(/^(\d+)/);
+				const displayIndex = fileNameMatch ? parseInt(fileNameMatch[1], 10) : index + 1;
+				const displayName = file.name.replace(/^\d+\.\s*/, '');
+
+				row.innerHTML = `
+					<td class="p-4 text-center">
+						<input type="checkbox" class="custom-checkbox file-checkbox" data-file-id="${file.id}">
+					</td>
+					<td class="p-4">
+						<span class="font-medium">${displayIndex}.</span> ${displayName}
+					</td>
+					<td class="p-4 text-center">
+						<button onclick="downloadFile('${file.id}')" class="btn-theme text-xs sm:text-sm font-medium py-1.5 px-3 rounded-md" title="Tải file ${displayName}">
+							Tải
+						</button>
+					</td>
+				`;
+				fileListBody.appendChild(row);
+			});
+			fileCount.textContent = files.length;
+		}
+		
+		// Các hàm còn lại (showError, downloadFile, downloadSelected, etc.) giữ nguyên như cũ...
+
+		function showError(message) {
+			loader.classList.add('hidden');
+			fileListContainer.classList.add('hidden');
+			errorMessage.classList.remove('hidden');
+			errorText.textContent = message;
+		}
+
+		function downloadFile(fileId) {
+			const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+			window.open(downloadUrl, '_blank');
+		}
+
+		function downloadSelected() {
+			const selectedCheckboxes = document.querySelectorAll('.file-checkbox:checked');
+			if (selectedCheckboxes.length === 0) {
+				alert('Vui lòng chọn ít nhất một bài giảng để tải.');
+				return;
+			}
+			
+			selectedCheckboxes.forEach((checkbox, index) => {
+				const fileId = checkbox.getAttribute('data-file-id');
+				setTimeout(() => {
+					downloadFile(fileId);
+				}, index * 300); 
+			});
+		}
+		
+		selectAllCheckbox.addEventListener('change', (event) => {
+			const checkboxes = document.querySelectorAll('.file-checkbox');
+			checkboxes.forEach(checkbox => {
+				checkbox.checked = event.target.checked;
+			});
+		});
+
+		downloadSelectedBtn.addEventListener('click', downloadSelected);
+
+		// Bắt đầu quá trình khi trang được tải
+		listFiles();
+	</script>
+</body>
+</html>
