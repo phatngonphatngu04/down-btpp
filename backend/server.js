@@ -14,7 +14,7 @@ const FOLDER_ID = '1-iSQUVPz1Gl9imiXWHecvrAmw7UtiHHm';
 app.use(cors()); 
 app.use(express.json());
 
-// Tạo một endpoint để frontend gọi đến
+// --- Endpoint để lấy danh sách file từ Google Drive ---
 app.get('/api/files', async (req, res) => {
     if (!API_KEY) {
         return res.status(500).json({ error: 'API key is not configured on the server.' });
@@ -38,6 +38,15 @@ app.get('/api/files', async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch files from Google Drive.' });
     }
 });
+
+// --- Endpoint Health Check để đánh thức server ---
+// Endpoint này sẽ được một dịch vụ bên ngoài (như UptimeRobot, Cron-job.org) gọi định kỳ
+// để giữ cho server của bạn không bị "ngủ" do không có hoạt động.
+app.get('/api/health', (req, res) => {
+    // Trả về một thông báo đơn giản để xác nhận server đang chạy
+    res.status(200).json({ status: 'ok', message: 'Server is awake and healthy!' });
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
