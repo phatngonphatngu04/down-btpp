@@ -232,8 +232,9 @@
 		}
 
 		function downloadFile(fileId) {
-			const downloadUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-			window.open(downloadUrl, '_blank');
+		    // Mở trang xem file tiêu chuẩn của Google Drive, cách này ổn định hơn
+		    const viewUrl = `https://drive.google.com/file/d/${fileId}/view`;
+		    window.open(viewUrl, '_blank');
 		}
 
 		function downloadSelected() {
